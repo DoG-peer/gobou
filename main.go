@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dullgiulio/pingo"
 	"io/ioutil"
 	"log"
@@ -20,8 +21,53 @@ type AppPath struct {
 	config                                              *AppConfig
 }
 
-//TODO
-func (app *AppPath) prepareDirs() {
+func (app *AppPath) prepareDirs() error {
+	// app.configDir
+	if finfo, e := os.Stat(app.configDir); os.IsNotExist(e) {
+		err := os.Mkdir(app.configDir, 0777)
+		if err != nil {
+			return err
+		}
+	} else if !finfo.IsDir() {
+		return fmt.Errorf("%s is not directory", app.configDir)
+	}
+
+	// app.dataDir
+	if finfo, e := os.Stat(app.dataDir); os.IsNotExist(e) {
+		err := os.Mkdir(app.dataDir, 0777)
+		if err != nil {
+			return err
+		}
+	} else if !finfo.IsDir() {
+		return fmt.Errorf("%s is not directory", app.dataDir)
+	}
+
+	// app.cacheDir
+	if finfo, e := os.Stat(app.cacheDir); os.IsNotExist(e) {
+		err := os.Mkdir(app.cacheDir, 0777)
+		if err != nil {
+			return err
+		}
+	} else if !finfo.IsDir() {
+		return fmt.Errorf("%s is not directory", app.cacheDir)
+	}
+	// app.pluginDir
+
+	if finfo, e := os.Stat(app.pluginDir); os.IsNotExist(e) {
+		err := os.Mkdir(app.pluginDir, 0777)
+		if err != nil {
+			return err
+		}
+	} else if !finfo.IsDir() {
+		return fmt.Errorf("%s is not directory", app.pluginDir)
+	}
+
+	// app.configFile
+	if finfo, e := os.Stat(app.configFile); !os.IsNotExist(e) && finfo.IsDir() {
+		return fmt.Errorf("%s is directory", app.configFile)
+	}
+	return nil
+
 }
 
 func (app *AppPath) getPlugins() ([]string, error) {
@@ -100,7 +146,10 @@ type AppTask interface {
 
 func main() {
 	app := getAppPath("gobou")
-	app.prepareDirs()
+	if err := app.prepareDirs(); err != nil {
+		log.Fatal(err)
+		return
+	}
 	pluginPaths, perr := app.getPlugins()
 	if perr != nil {
 		log.Fatal(perr)
@@ -138,5 +187,6 @@ func main() {
 	}
 	log.Println(app)
 	for {
+		break
 	}
 }
