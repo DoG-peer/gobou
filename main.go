@@ -89,7 +89,7 @@ func (app *AppPath) getPlugins() ([]string, error) {
 	}
 
 	for _, plugin := range files {
-		plugins = append(plugins, plugin.Name())
+		plugins = append(plugins, filepath.Join(app.pluginDir, plugin.Name()))
 	}
 	return plugins, nil
 }
@@ -142,6 +142,7 @@ type AppTask interface {
 	run()
 	configure()
 	interval() time.Duration
+	self() *AppTask
 }
 
 func main() {
@@ -158,35 +159,51 @@ func main() {
 	plugins := []*pingo.Plugin{}
 	tasks := []*AppTask{}
 	for _, pluginPath := range pluginPaths {
+		log.Println(pluginPath)
 		plug := pingo.NewPlugin("unix", pluginPath)
 		plugins = append(plugins, plug)
 
 		plug.Start()
-		var task *AppTask
-		err := plug.Call("Task", nil, task)
+		var task AppTask
+		var n time.Duration
+		log.Println("before load")
+		err := plug.Call("Task.Interval", "", &n)
+		log.Println(n)
 		if err != nil {
 			log.Fatalln(err, "On loading "+pluginPath)
 			continue
 		}
-		errConf := app.configurePlugin(task, pluginPath)
+		err = plug.Call("Task.Interval", nil, &task)
+		if err != nil {
+			log.Fatalln(err, "On loading "+pluginPath)
+			continue
+		}
+		errConf := app.configurePlugin(&task, pluginPath)
 		if errConf != nil {
 			log.Fatalln(err, "On loading "+pluginPath)
 			continue
 		}
-		tasks = append(tasks, task)
-		plug.Stop()
+		tasks = append(tasks, &task)
 	}
 
-	for _, task := range tasks {
-		go func() {
-			for {
-				(*task).run()
-				time.Sleep((*task).interval())
-			}
-		}()
-	}
-	log.Println(app)
-	for {
-		break
-	}
+	defer func() {
+		for _, plug := range plugins {
+			plug.Stop()
+		}
+	}()
+	time.Sleep(1 * time.Second)
+	/*
+		for _, task := range tasks {
+			go func() {
+				for {
+					(*task).run()
+					time.Sleep((*task).interval())
+				}
+			}()
+		}
+		log.Println(app)
+		for {
+			break
+		}
+	*/
 }
