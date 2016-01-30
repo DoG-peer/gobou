@@ -17,8 +17,13 @@ type AppConfig struct {
 
 // AppPath stores paths about this application
 type AppPath struct {
-	configDir, dataDir, cacheDir, pluginDir, configFile string
-	config                                              *AppConfig
+	configDir       string
+	dataDir         string
+	cacheDir        string
+	pluginDir       string
+	pluginConfigDir string
+	configFile      string
+	config          *AppConfig
 }
 
 func (app *AppPath) prepareDirs() error {
@@ -51,8 +56,8 @@ func (app *AppPath) prepareDirs() error {
 	} else if !finfo.IsDir() {
 		return fmt.Errorf("%s is not directory", app.cacheDir)
 	}
-	// app.pluginDir
 
+	// app.pluginDir
 	if finfo, e := os.Stat(app.pluginDir); os.IsNotExist(e) {
 		err := os.Mkdir(app.pluginDir, 0777)
 		if err != nil {
@@ -60,6 +65,16 @@ func (app *AppPath) prepareDirs() error {
 		}
 	} else if !finfo.IsDir() {
 		return fmt.Errorf("%s is not directory", app.pluginDir)
+	}
+
+	// app.pluginConfigDir
+	if finfo, e := os.Stat(app.pluginConfigDir); os.IsNotExist(e) {
+		err := os.Mkdir(app.pluginConfigDir, 0777)
+		if err != nil {
+			return err
+		}
+	} else if !finfo.IsDir() {
+		return fmt.Errorf("%s is not directory", app.pluginConfigDir)
 	}
 
 	// app.configFile
@@ -125,6 +140,7 @@ func getAppPath(name string) AppPath {
 
 	app.configFile = filepath.Join(app.configDir, "config.yml")
 	app.pluginDir = filepath.Join(app.configDir, "plugin")
+	app.pluginConfigDir = filepath.Join(app.configDir, "plugin_config")
 
 	return app
 }
@@ -133,16 +149,21 @@ func getAppPath(name string) AppPath {
 func (app *AppPath) configure() error {
 	return nil
 }
+
+/*
 func (app *AppPath) configurePlugin(task *AppTask, pluginPath string) error {
 	return nil
 }
+*/
 
-// AppTask stores a task defined in a plugin
-type AppTask interface {
-	run()
-	configure()
-	interval() time.Duration
-	self() *AppTask
+// Task stores the infomation of the running plugin
+type Task struct {
+	interval   time.Duration
+	err        error
+	configFile string
+	name       string
+	path       string
+	dataFile   string
 }
 
 func main() {
@@ -157,53 +178,52 @@ func main() {
 		return
 	}
 	plugins := []*pingo.Plugin{}
-	tasks := []*AppTask{}
+	//tasks := []*AppTask{}
 	for _, pluginPath := range pluginPaths {
 		log.Println(pluginPath)
+
 		plug := pingo.NewPlugin("unix", pluginPath)
 		plugins = append(plugins, plug)
+		go func() {
+			task := Task{}
+			task.path = pluginPath
+			task.name = filepath.Base(pluginPath)
+			task.configFile = filepath.Join(app.pluginConfigDir, task.name)
+			task.dataFile = filepath.Join(app.dataDir, task.name)
 
-		plug.Start()
-		var task AppTask
-		var n time.Duration
-		log.Println("before load")
-		err := plug.Call("Task.Interval", "", &n)
-		log.Println(n)
-		if err != nil {
-			log.Fatalln(err, "On loading "+pluginPath)
-			continue
-		}
-		err = plug.Call("Task.Interval", nil, &task)
-		if err != nil {
-			log.Fatalln(err, "On loading "+pluginPath)
-			continue
-		}
-		errConf := app.configurePlugin(&task, pluginPath)
-		if errConf != nil {
-			log.Fatalln(err, "On loading "+pluginPath)
-			continue
-		}
-		tasks = append(tasks, &task)
-	}
-
-	defer func() {
-		for _, plug := range plugins {
-			plug.Stop()
-		}
-	}()
-	time.Sleep(1 * time.Second)
-	/*
-		for _, task := range tasks {
-			go func() {
-				for {
-					(*task).run()
-					time.Sleep((*task).interval())
+			plug.Start()
+			defer plug.Stop()
+			if err := plug.Call("Task.Configure", task.configFile, &task.err); err != nil {
+				log.Fatalf("Failed to configurePlugin %s", task.configFile)
+				return
+			}
+			for {
+				// main task
+				if err := plug.Call("Task.Main", "", &task.err); err != nil {
+					log.Fatalln(err)
+					break
 				}
-			}()
-		}
-		log.Println(app)
-		for {
-			break
-		}
-	*/
+				// log
+				if err := plug.Call("Task.SaveData", task.dataFile, &task.err); err != nil {
+					log.Fatalln(err)
+					break
+				}
+				// change config
+				if err := plug.Call("Task.SaveConfig", task.configFile, &task.err); err != nil {
+					log.Fatalln(err)
+					break
+				}
+
+				// wait
+				if err := plug.Call("Task.Interval", "", &task.interval); err != nil {
+					log.Fatalln(err)
+					break
+				} else {
+					time.Sleep(task.interval)
+				}
+			}
+		}()
+	}
+	time.Sleep(10 * time.Second)
+
 }
