@@ -5,6 +5,18 @@ import (
 )
 
 func main() {
+	cli := ParseCliInfo()
+	switch {
+	case cli.isHelp:
+		cli.ShowHelp()
+		return
+	case cli.isInstall:
+		log.Println("install")
+		return
+	case cli.isGenerate:
+		log.Println("generate")
+		return
+	}
 	app := GetAppPath("gobou")
 	if err := app.PrepareDirs(); err != nil {
 		log.Fatal(err)
