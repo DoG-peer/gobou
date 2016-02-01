@@ -1,4 +1,3 @@
 #! /usr/bin/env sh
 
-go build
-mv ./hello ~/.config/gobou/plugin/hello
+go build -o  ~/.config/gobou/plugin/hello
