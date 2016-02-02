@@ -106,10 +106,18 @@ func (app *AppPath) GetPlugins() ([]string, error) {
 	return plugins, nil
 }
 
+func GetHome() string{
+	home := os.Getenv("HOME")
+	if home == "" {
+		home = filepath.Join(os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"))
+	}
+	return home
+}
+
 func GetAppPath(name string) AppPath {
 	app := AppPath{}
 
-	home := os.Getenv("HOME")
+	home := GerHome()
 	var xdgConfigDir, xdgDataDir, xdgCacheHome string
 	if os.Getenv("XDG_CONFIG_DIR") != "" {
 		xdgConfigDir = os.Getenv("XDG_CONFIG_DIR")
