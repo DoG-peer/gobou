@@ -5,29 +5,37 @@ import (
 )
 
 func main() {
+	// check arguments
 	cli := ParseCliInfo()
+	// store pathdata
+	app := GetAppPath("gobou")
+	// make directories
+	if err := app.PrepareDirs(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// switch to each command
 	switch {
 	case cli.isHelp:
 		cli.ShowHelp()
 		return
 	case cli.isInstall:
-		log.Println("install")
+		cli.installInfo.Install(app.PluginDir, app.CacheDir)
 		return
 	case cli.isGenerate:
 		log.Println("generate")
 		return
 	}
-	app := GetAppPath("gobou")
-	if err := app.PrepareDirs(); err != nil {
-		log.Fatal(err)
-		return
-	}
+
+	// search plugins
 	pluginPaths, perr := app.GetPlugins()
 	if perr != nil {
 		log.Fatal(perr)
 		return
 	}
 
+	// run plugin
 	for _, pluginPath := range pluginPaths {
 		go func() {
 			task := LoadTask(pluginPath, app.PluginConfigDir, app.DataDir)

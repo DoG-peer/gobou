@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestSimple(t *testing.T) {
+func TestPlugin(t *testing.T) {
 	value := 1
 	expected := 2
 	if value != expected {
