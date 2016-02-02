@@ -117,7 +117,7 @@ func GetHome() string{
 func GetAppPath(name string) AppPath {
 	app := AppPath{}
 
-	home := GerHome()
+	home := GetHome()
 	var xdgConfigDir, xdgDataDir, xdgCacheHome string
 	if os.Getenv("XDG_CONFIG_DIR") != "" {
 		xdgConfigDir = os.Getenv("XDG_CONFIG_DIR")
