@@ -26,7 +26,7 @@ type AppPath struct {
 func (app *AppPath) PrepareDirs() error {
 	// app.configDir
 	if finfo, e := os.Stat(app.ConfigDir); os.IsNotExist(e) {
-		err := os.Mkdir(app.ConfigDir, 0777)
+		err := os.MkdirAll(app.ConfigDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func (app *AppPath) PrepareDirs() error {
 
 	// app.dataDir
 	if finfo, e := os.Stat(app.DataDir); os.IsNotExist(e) {
-		err := os.Mkdir(app.DataDir, 0777)
+		err := os.MkdirAll(app.DataDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func (app *AppPath) PrepareDirs() error {
 
 	// app.cacheDir
 	if finfo, e := os.Stat(app.CacheDir); os.IsNotExist(e) {
-		err := os.Mkdir(app.CacheDir, 0777)
+		err := os.MkdirAll(app.CacheDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (app *AppPath) PrepareDirs() error {
 
 	// app.pluginDir
 	if finfo, e := os.Stat(app.PluginDir); os.IsNotExist(e) {
-		err := os.Mkdir(app.PluginDir, 0777)
+		err := os.MkdirAll(app.PluginDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func (app *AppPath) PrepareDirs() error {
 
 	// app.pluginConfigDir
 	if finfo, e := os.Stat(app.PluginConfigDir); os.IsNotExist(e) {
-		err := os.Mkdir(app.PluginConfigDir, 0777)
+		err := os.MkdirAll(app.PluginConfigDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (app *AppPath) GetPlugins() ([]string, error) {
 	return plugins, nil
 }
 
-func GetHome() string{
+func GetHome() string {
 	home := os.Getenv("HOME")
 	if home == "" {
 		home = filepath.Join(os.Getenv("HOMEDRIVE"), os.Getenv("HOMEPATH"))
