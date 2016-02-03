@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/dullgiulio/pingo"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -29,7 +30,11 @@ func LoadTask(pluginPath, pluginConfigDir, dataDir string) Task {
 
 // Start starts Task
 func (t *Task) Start() {
-	t.plugin = pingo.NewPlugin("unix", t.path)
+	if runtime.GOOS == "windows" {
+		t.plugin = pingo.NewPlugin("tcp", t.path)
+	} else {
+		t.plugin = pingo.NewPlugin("tcp", t.path)
+	}
 	t.plugin.Start()
 }
 
