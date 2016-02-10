@@ -33,13 +33,15 @@ func (ii *InstallInfo) Install(pluginDir, cacheDir string) {
 
 // run git clone command
 func clone(gurl, srcPath string) error {
-	_, err := exec.Command("git", "clone", gurl, srcPath).Output()
+	out, err := exec.Command("git", "clone", gurl, srcPath).CombinedOutput()
+	log.Println(string(out))
 	return err
 }
 
 // run go build command
 func build(src, dist string) error {
-	_, err := exec.Command("go", "build", "-o", dist, src).Output()
+	out, err := exec.Command("go", "build", "-o", dist, src).CombinedOutput()
+	log.Println(string(out))
 	return err
 }
 

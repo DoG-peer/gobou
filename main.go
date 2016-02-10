@@ -42,7 +42,7 @@ func main() {
 			task.Start()
 			defer task.Stop()
 			if err := task.Configure(); err != nil {
-				log.Fatalf("Failed to configurePlugin %s", task.configFile)
+				log.Fatalf("Failed to configure Plugin %s", task.configFile)
 				return
 			}
 

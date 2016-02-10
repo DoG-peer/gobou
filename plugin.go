@@ -23,7 +23,7 @@ func LoadTask(pluginPath, pluginConfigDir, dataDir string) Task {
 	task := Task{}
 	task.path = pluginPath
 	task.name = filepath.Base(pluginPath)
-	task.configFile = filepath.Join(pluginConfigDir, task.name)
+	task.configFile = filepath.Join(pluginConfigDir, task.name+".json")
 	task.dataFile = filepath.Join(dataDir, task.name)
 	return task
 }
