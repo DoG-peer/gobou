@@ -6,14 +6,17 @@ import (
 	"path/filepath"
 )
 
+// InstallInfo is
 type InstallInfo struct {
 	url  string
 	name string
 }
 
+// Install runs by gobou install hoge/foo
 func (ii *InstallInfo) Install(pluginDir, cacheDir string) {
 	gurl, err := parseInstallURL(ii.url)
-	src := getSrcPath(ii.name, cacheDir)
+	srcDir := filepath.Join(cacheDir, "src")
+	src := getSrcPath(ii.name, srcDir)
 	dist := getDistPath(ii.name, pluginDir)
 	if err != nil {
 		return
@@ -40,13 +43,21 @@ func clone(gurl, srcPath string) error {
 
 // run go build command
 func build(src, dist string) error {
-	out, err := exec.Command("go", "build", "-o", dist, src).CombinedOutput()
+	pwd, err := filepath.Abs(".")
+	if err != nil {
+		return err
+	}
+	relsrc, err := filepath.Rel(pwd, src)
+	if err != nil {
+		return err
+	}
+	out, err := exec.Command("go", "build", "-o", dist, relsrc).CombinedOutput()
 	log.Println(string(out))
 	return err
 }
 
-func getSrcPath(name, cacheDir string) string {
-	return filepath.Join(cacheDir, name)
+func getSrcPath(name, srcDir string) string {
+	return filepath.Join(srcDir, name)
 }
 
 func getDistPath(name, pluginDir string) string {
