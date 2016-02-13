@@ -33,7 +33,7 @@ func (t *Task) Start() {
 	if runtime.GOOS == "windows" {
 		t.plugin = pingo.NewPlugin("tcp", t.path)
 	} else {
-		t.plugin = pingo.NewPlugin("tcp", t.path)
+		t.plugin = pingo.NewPlugin("unix", t.path)
 	}
 	t.plugin.Start()
 }

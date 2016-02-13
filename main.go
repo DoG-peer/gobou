@@ -21,10 +21,18 @@ func main() {
 		cli.ShowHelp()
 		return
 	case cli.isInstall:
-		cli.installInfo.Install(app.PluginDir, app.CacheDir)
+		cli.installInfo.Install(app.PluginDir, app.CacheDir, app.PluginConfigDir)
 		return
 	case cli.isGenerate:
 		log.Println("generate")
+		return
+	case cli.isConfig:
+		if cli.configInfo.isMain {
+			cli.configInfo.OpenMainConfig(app.ConfigFile)
+		} else {
+			cli.configInfo.OpenPluginConfig(app.PluginConfigDir)
+
+		}
 		return
 	}
 

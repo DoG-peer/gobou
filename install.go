@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -13,7 +15,7 @@ type InstallInfo struct {
 }
 
 // Install runs by gobou install hoge/foo
-func (ii *InstallInfo) Install(pluginDir, cacheDir string) {
+func (ii *InstallInfo) Install(pluginDir, cacheDir, pluginConfigDir string) {
 	gurl, err := parseInstallURL(ii.url)
 	srcDir := filepath.Join(cacheDir, "src")
 	src := getSrcPath(ii.name, srcDir)
@@ -27,6 +29,12 @@ func (ii *InstallInfo) Install(pluginDir, cacheDir string) {
 		return
 	}
 	err = build(src, dist)
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+
+	err = initConfigFile(filepath.Join(pluginConfigDir, ii.name))
 	if err != nil {
 		log.Fatalln(err)
 		return
@@ -68,4 +76,12 @@ func getDistPath(name, pluginDir string) string {
 func parseInstallURL(url string) (string, error) {
 	githubURL := "https://github.com/" + url + ".git"
 	return githubURL, nil
+}
+
+func initConfigFile(file string) error {
+	_, e := os.Stat(file)
+	if os.IsNotExist(e) {
+		return ioutil.WriteFile(file, []byte("{}"), os.ModePerm)
+	}
+	return nil
 }

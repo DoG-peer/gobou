@@ -10,20 +10,23 @@ type CliInfo struct {
 	isDefault    bool
 	isInstall    bool
 	isGenerate   bool
+	isConfig     bool
 	isHelp       bool
 	installInfo  InstallInfo
 	generateInfo GenerateInfo
+	configInfo   Configurator
 }
 
 /*
 	gobou
-	gobou i user/pname
-	gobou i user/pname other_name
+	gobou i user/plugin_name
+	gobou i user/plugin_name other_name
 	gobou install user/pname
 	gobou install user/pname other_name
 	gobou g relative_path
 	gobou generate relative_path
-
+	gobou config
+	gobou config plugin_name
 */
 func ParseCliInfo() CliInfo {
 	cinfo := CliInfo{
@@ -47,6 +50,9 @@ func ParseCliInfo() CliInfo {
 	case "generate":
 		cinfo.isGenerate = true
 		cinfo.parseGenerateInfo(os.Args[2:])
+	case "config":
+		cinfo.isConfig = true
+		cinfo.parseConfigInfo(os.Args[2:])
 	default:
 		cinfo.isHelp = true
 	}
@@ -91,13 +97,29 @@ func (info *CliInfo) parseGenerateInfo(args []string) {
 
 }
 
+func (info *CliInfo) parseConfigInfo(args []string) {
+	if len(args) == 1 {
+		info.configInfo = Configurator{
+			isMain: false,
+			plugin: args[0],
+		}
+	} else {
+		info.configInfo = Configurator{
+			isMain: true,
+			plugin: "",
+		}
+	}
+}
+
 func (info *CliInfo) ShowHelp() {
 	fmt.Println(`how to use:
 	gobou
-	gobou i user/pname
-	gobou i user/pname other_name
+	gobou i user/plugin_name
+	gobou i user/plugin_name other_name
 	gobou install user/pname
 	gobou install user/pname other_name
 	gobou g relative_path
-	gobou generate relative_path`)
+	gobou generate relative_path
+	gobou config
+	gobou config plugin_name`)
 }

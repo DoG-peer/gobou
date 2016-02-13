@@ -143,7 +143,7 @@ func GetAppPath(name string) AppPath {
 
 	app.CacheDir = filepath.Join(xdgCacheHome, name)
 
-	app.ConfigFile = filepath.Join(app.ConfigDir, "config.yml")
+	app.ConfigFile = filepath.Join(app.ConfigDir, "config.json")
 	app.PluginDir = filepath.Join(app.ConfigDir, "plugin")
 	app.PluginConfigDir = filepath.Join(app.ConfigDir, "plugin_config")
 
