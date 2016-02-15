@@ -9,6 +9,7 @@ import (
 type CliInfo struct {
 	isDefault    bool
 	isInstall    bool
+	isUpdate     bool
 	isGenerate   bool
 	isConfig     bool
 	isHelp       bool
@@ -23,6 +24,10 @@ type CliInfo struct {
 	gobou i user/plugin_name other_name
 	gobou install user/pname
 	gobou install user/pname other_name
+	gobou u user/plugin_name
+	gobou u user/plugin_name other_name
+	gobou update user/pname
+	gobou update user/pname other_name
 	gobou g relative_path
 	gobou generate relative_path
 	gobou config
@@ -32,6 +37,7 @@ func ParseCliInfo() CliInfo {
 	cinfo := CliInfo{
 		isDefault:  false,
 		isInstall:  false,
+		isUpdate:   false,
 		isGenerate: false,
 		isHelp:     false,
 	}
@@ -44,6 +50,11 @@ func ParseCliInfo() CliInfo {
 		fallthrough
 	case "install":
 		cinfo.isInstall = true
+		cinfo.parseInstallInfo(os.Args[2:])
+	case "u":
+		fallthrough
+	case "update":
+		cinfo.isUpdate = true
 		cinfo.parseInstallInfo(os.Args[2:])
 	case "g":
 		fallthrough
@@ -64,6 +75,10 @@ func ParseCliInfo() CliInfo {
 	gobou i user/pname other_name
 	gobou install user/pname
 	gobou install user/pname other_name
+	gobou u user/pname
+	gobou u user/pname other_name
+	gobou update user/pname
+	gobou update user/pname other_name
 */
 func (info *CliInfo) parseInstallInfo(args []string) {
 	switch len(args) {
@@ -79,6 +94,7 @@ func (info *CliInfo) parseInstallInfo(args []string) {
 		}
 	default:
 		info.isInstall = false
+		info.isUpdate = false
 		info.isHelp = true
 	}
 
@@ -118,6 +134,10 @@ func (info *CliInfo) ShowHelp() {
 	gobou i user/plugin_name other_name
 	gobou install user/pname
 	gobou install user/pname other_name
+	gobou u user/plugin_name
+	gobou u user/plugin_name other_name
+	gobou update user/pname
+	gobou update user/pname other_name
 	gobou g relative_path
 	gobou generate relative_path
 	gobou config

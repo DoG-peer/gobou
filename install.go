@@ -42,9 +42,37 @@ func (ii *InstallInfo) Install(pluginDir, cacheDir, pluginConfigDir string) {
 
 }
 
+// Update runs by gobou update hoge/foo
+func (ii *InstallInfo) Update(pluginDir, cacheDir, pluginConfigDir string) {
+	gurl, err := parseInstallURL(ii.url)
+	srcDir := filepath.Join(cacheDir, "src")
+	src := getSrcPath(ii.name, srcDir)
+	dist := getDistPath(ii.name, pluginDir)
+	if err != nil {
+		return
+	}
+	err = pull(gurl, src)
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+	err = build(src, dist)
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+}
+
 // run git clone command
 func clone(gurl, srcPath string) error {
 	out, err := exec.Command("git", "clone", gurl, srcPath).CombinedOutput()
+	log.Println(string(out))
+	return err
+}
+
+// run git pull command
+func pull(gurl, srcPath string) error {
+	out, err := exec.Command("git", "-C", srcPath, "pull").CombinedOutput()
 	log.Println(string(out))
 	return err
 }

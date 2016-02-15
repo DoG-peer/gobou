@@ -23,6 +23,9 @@ func main() {
 	case cli.isInstall:
 		cli.installInfo.Install(app.PluginDir, app.CacheDir, app.PluginConfigDir)
 		return
+	case cli.isUpdate:
+		cli.installInfo.Update(app.PluginDir, app.CacheDir, app.PluginConfigDir)
+		return
 	case cli.isGenerate:
 		log.Println("generate")
 		return
