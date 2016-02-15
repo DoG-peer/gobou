@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +10,7 @@ import (
 
 // AppConfig stores config about this application
 type AppConfig struct {
+	Plugins []PluginInfo
 }
 
 // AppPath stores paths about this application
@@ -20,58 +21,29 @@ type AppPath struct {
 	PluginDir       string
 	PluginConfigDir string
 	ConfigFile      string
-	Config          *AppConfig
+	Config          AppConfig
 }
 
+// PrepareDirs make directories and so on
 func (app *AppPath) PrepareDirs() error {
-	// app.configDir
-	if finfo, e := os.Stat(app.ConfigDir); os.IsNotExist(e) {
-		err := os.MkdirAll(app.ConfigDir, 0777)
-		if err != nil {
-			return err
-		}
-	} else if !finfo.IsDir() {
-		return fmt.Errorf("%s is not directory", app.ConfigDir)
+	dirs := []string{
+		app.ConfigDir,
+		app.DataDir,
+		app.CacheDir,
+		app.PluginDir,
+		app.PluginConfigDir,
 	}
 
-	// app.dataDir
-	if finfo, e := os.Stat(app.DataDir); os.IsNotExist(e) {
-		err := os.MkdirAll(app.DataDir, 0777)
-		if err != nil {
-			return err
+	for _, dir := range dirs {
+		if finfo, e := os.Stat(dir); os.IsNotExist(e) {
+			err := os.MkdirAll(dir, 0777)
+			if err != nil {
+				return err
+			}
+		} else if !finfo.IsDir() {
+			return fmt.Errorf("%s is not directory", dir)
 		}
-	} else if !finfo.IsDir() {
-		return fmt.Errorf("%s is not directory", app.DataDir)
-	}
 
-	// app.cacheDir
-	if finfo, e := os.Stat(app.CacheDir); os.IsNotExist(e) {
-		err := os.MkdirAll(app.CacheDir, 0777)
-		if err != nil {
-			return err
-		}
-	} else if !finfo.IsDir() {
-		return fmt.Errorf("%s is not directory", app.CacheDir)
-	}
-
-	// app.pluginDir
-	if finfo, e := os.Stat(app.PluginDir); os.IsNotExist(e) {
-		err := os.MkdirAll(app.PluginDir, 0777)
-		if err != nil {
-			return err
-		}
-	} else if !finfo.IsDir() {
-		return fmt.Errorf("%s is not directory", app.PluginDir)
-	}
-
-	// app.pluginConfigDir
-	if finfo, e := os.Stat(app.PluginConfigDir); os.IsNotExist(e) {
-		err := os.MkdirAll(app.PluginConfigDir, 0777)
-		if err != nil {
-			return err
-		}
-	} else if !finfo.IsDir() {
-		return fmt.Errorf("%s is not directory", app.PluginConfigDir)
 	}
 
 	// app.configFile
@@ -82,30 +54,7 @@ func (app *AppPath) PrepareDirs() error {
 
 }
 
-func (app *AppPath) GetPlugins() ([]string, error) {
-	plugins := []string{}
-	if app.PluginDir == "" {
-		return nil, errors.New("your AppPath does not have a plugin path")
-	}
-	finfo, e := os.Stat(app.PluginDir)
-	if e != nil {
-		return nil, e
-	}
-	if !finfo.IsDir() {
-		return nil, errors.New(app.PluginDir + " is not a directory")
-	}
-	files, e2 := ioutil.ReadDir(app.PluginDir)
-
-	if e2 != nil {
-		return nil, e2
-	}
-
-	for _, plugin := range files {
-		plugins = append(plugins, filepath.Join(app.PluginDir, plugin.Name()))
-	}
-	return plugins, nil
-}
-
+// GetHome returns absolute path of home directory
 func GetHome() string {
 	home := os.Getenv("HOME")
 	if home == "" {
@@ -114,6 +63,7 @@ func GetHome() string {
 	return home
 }
 
+// GetAppPath initialize application
 func GetAppPath(name string) AppPath {
 	app := AppPath{}
 
@@ -150,13 +100,37 @@ func GetAppPath(name string) AppPath {
 	return app
 }
 
-//TODO
+// Configure loads config file
 func (app *AppPath) Configure() error {
+	file, err := ioutil.ReadFile(app.ConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	err = json.Unmarshal(file, &app.Config)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-/*
-func (app *AppPath) configurePlugin(task *AppTask, pluginPath string) error {
-	return nil
+func (c *AppConfig) Add(plug PluginInfo) {
+	newConfig := []PluginInfo{plug}
+	for _, p := range c.Plugins {
+		if p.Name != plug.Name {
+			newConfig = append(newConfig, p)
+		}
+	}
+	c.Plugins = newConfig
 }
-*/
+
+func (c *AppConfig) String() string {
+	s, _ := json.MarshalIndent(c, "", "  ")
+	return string(s)
+}
+
+func (app *AppPath) SaveConfig() {
+	ioutil.WriteFile(app.ConfigFile, []byte(app.Config.String()), os.ModePerm)
+}

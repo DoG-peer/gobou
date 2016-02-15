@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -9,6 +10,11 @@ func main() {
 	cli := ParseCliInfo()
 	// store pathdata
 	app := GetAppPath("gobou")
+	// load configfile
+	if err := app.Configure(); err != nil {
+		log.Fatal(err)
+		return
+	}
 	// make directories
 	if err := app.PrepareDirs(); err != nil {
 		log.Fatal(err)
@@ -22,9 +28,15 @@ func main() {
 		return
 	case cli.isInstall:
 		cli.installInfo.Install(app.PluginDir, app.CacheDir, app.PluginConfigDir)
+		plug := app.MakePluginInfo(cli.installInfo.url, cli.installInfo.name)
+		app.Config.Add(plug)
+		app.SaveConfig()
 		return
 	case cli.isUpdate:
 		cli.installInfo.Update(app.PluginDir, app.CacheDir, app.PluginConfigDir)
+		plug := app.MakePluginInfo(cli.installInfo.url, cli.installInfo.name)
+		app.Config.Add(plug)
+		app.SaveConfig()
 		return
 	case cli.isGenerate:
 		log.Println("generate")
@@ -40,44 +52,46 @@ func main() {
 	}
 
 	// search plugins
-	pluginPaths, perr := app.GetPlugins()
-	if perr != nil {
-		log.Fatal(perr)
+	plugins := app.Config.Plugins
+	if len(plugins) == 0 {
+		fmt.Println("There is no plugin")
 		return
 	}
 
 	// run plugin
-	for _, pluginPath := range pluginPaths {
+	for _, plugInfo := range plugins {
 		go func() {
-			task := LoadTask(pluginPath, app.PluginConfigDir, app.DataDir)
-			task.Start()
-			defer task.Stop()
-			if err := task.Configure(); err != nil {
-				log.Fatalf("Failed to configure Plugin %s", task.configFile)
+			plug := PluginManager{}
+			plug.Load(plugInfo)
+			//plug := LoadTask(plugInfo.Path, app.PluginConfigDir, app.DataDir)
+			plug.Start()
+			defer plug.Stop()
+			if err := plug.Configure(); err != nil {
+				log.Fatalf("Failed to configure Plugin %s", plug.configFile)
 				return
 			}
 
 			for {
-				// main task
-				if err := task.Main(); err != nil {
+				// main plug
+				if err := plug.Main(); err != nil {
 					log.Fatalln(err)
 					break
 				}
 
 				// log
-				if err := task.SaveData(); err != nil {
+				if err := plug.SaveData(); err != nil {
 					log.Fatalln(err)
 					break
 				}
 
 				// change config
-				if err := task.SaveConfig(); err != nil {
+				if err := plug.SaveConfig(); err != nil {
 					log.Fatalln(err)
 					break
 				}
 
 				// wait
-				if err := task.Wait(); err != nil {
+				if err := plug.Wait(); err != nil {
 					log.Fatalln(err)
 					break
 				}

@@ -7,72 +7,100 @@ import (
 	"time"
 )
 
-// Task stores the infomation of the running plugin
-type Task struct {
+// PluginManager stores the infomation of the running plugin
+type PluginManager struct {
 	interval   time.Duration
 	err        error
 	configFile string
 	name       string
 	path       string
-	dataFile   string
+	dataDir    string
 	plugin     *pingo.Plugin
+	pluginInfo PluginInfo
 }
 
-// LoadTask initialize Task
-func LoadTask(pluginPath, pluginConfigDir, dataDir string) Task {
-	task := Task{}
-	task.path = pluginPath
-	task.name = filepath.Base(pluginPath)
-	task.configFile = filepath.Join(pluginConfigDir, task.name+".json")
-	task.dataFile = filepath.Join(dataDir, task.name)
-	return task
+// PluginInfo is saved in the main config.json
+type PluginInfo struct {
+	Name            string
+	Path            string
+	Repository      string
+	SourceDirectory string
+	CacheDirectory  string
+	DataDirectory   string
+	ConfigFile      string
+}
+
+// MakePluginInfo called by app
+func (app *AppPath) MakePluginInfo(repository string, name string) PluginInfo {
+	bin := name
+	if runtime.GOOS == "windows" {
+		bin += ".bin"
+	}
+	return PluginInfo{
+		Name:            name,
+		Path:            filepath.Join(app.PluginDir, bin),
+		Repository:      repository,
+		SourceDirectory: filepath.Join(app.CacheDir, "src", name),
+		CacheDirectory:  filepath.Join(app.CacheDir, "plugin", name),
+		DataDirectory:   filepath.Join(app.DataDir, "plugin", name),
+		ConfigFile:      filepath.Join(app.ConfigDir, "plugin_config", name+".json"),
+	}
+}
+
+// Load plugin by manager
+func (mng *PluginManager) Load(plug PluginInfo) {
+	mng.pluginInfo = plug
+	mng.name = plug.Name
+	mng.path = plug.Path
+	mng.configFile = plug.ConfigFile
+	mng.dataDir = plug.DataDirectory
 }
 
 // Start starts Task
-func (t *Task) Start() {
+func (p *PluginManager) Start() {
 	if runtime.GOOS == "windows" {
-		t.plugin = pingo.NewPlugin("tcp", t.path)
+		p.plugin = pingo.NewPlugin("tcp", p.path)
 	} else {
-		t.plugin = pingo.NewPlugin("unix", t.path)
+		p.plugin = pingo.NewPlugin("unix", p.path)
 	}
-	t.plugin.Start()
+	p.plugin.Start()
 }
 
 // Stop stops Task
-func (t *Task) Stop() {
-	t.plugin.Stop()
+func (p *PluginManager) Stop() {
+	p.plugin.Stop()
 }
 
-// Main calls main task
-func (t *Task) Main() error {
-	return t.plugin.Call("Task.Main", "", &t.err)
+// Main calls main plug
+func (p *PluginManager) Main() error {
+	return p.plugin.Call("Task.Main", "", &p.err)
 }
 
 // SaveData saves data
-func (t *Task) SaveData() error {
-	return t.plugin.Call("Task.SaveData", t.dataFile, &t.err)
+func (p *PluginManager) SaveData() error {
+	return p.plugin.Call("Task.SaveData", p.dataDir, &p.err)
 }
 
 // SaveConfig saves config
-func (t *Task) SaveConfig() error {
-	return t.plugin.Call("Task.SaveConfig", t.configFile, &t.err)
+func (p *PluginManager) SaveConfig() error {
+	return p.plugin.Call("Task.SaveConfig", p.configFile, &p.err)
 }
 
 // ReadInterval checks wait interval
-func (t *Task) ReadInterval() error {
-	return t.plugin.Call("Task.Interval", "", &t.interval)
+func (p *PluginManager) ReadInterval() error {
+	return p.plugin.Call("Task.Interval", "", &p.interval)
 }
 
 // Configure load config
-func (t *Task) Configure() error {
-	return t.plugin.Call("Task.Configure", t.configFile, &t.err)
+func (p *PluginManager) Configure() error {
+	return p.plugin.Call("Task.Configure", p.configFile, &p.err)
 }
 
 // Wait waits until next step
-func (t *Task) Wait() error {
-	if err := t.ReadInterval(); err != nil {
+func (p *PluginManager) Wait() error {
+	if err := p.ReadInterval(); err != nil {
 		return err
 	}
-	time.Sleep(t.interval)
+	time.Sleep(p.interval)
 	return nil
 }
