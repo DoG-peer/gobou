@@ -9,6 +9,7 @@ import (
 	"runtime"
 )
 
+// Configurator is used by gobou config command
 type Configurator struct {
 	isMain bool
 	plugin string
@@ -30,6 +31,7 @@ func edit(fname string) {
 	}
 }
 
+// OpenMainConfig opens config file of gobou
 func (c *Configurator) OpenMainConfig(confFile string) {
 	_, e := os.Stat(confFile)
 	if os.IsNotExist(e) {
@@ -38,6 +40,7 @@ func (c *Configurator) OpenMainConfig(confFile string) {
 	edit(confFile)
 }
 
+// OpenPluginConfig opens config file of the plugin
 func (c *Configurator) OpenPluginConfig(pluginConfigDir string) {
 	file := filepath.Join(pluginConfigDir, c.plugin+".json")
 	edit(file)

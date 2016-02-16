@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// CliInfo is
 type CliInfo struct {
 	isDefault    bool
 	isInstall    bool
@@ -18,7 +19,9 @@ type CliInfo struct {
 	configInfo   Configurator
 }
 
-/*
+// ShowHelp shows how to use
+func (info *CliInfo) ShowHelp() {
+	fmt.Println(`how to use:
 	gobou
 	gobou i user/plugin_name
 	gobou i user/plugin_name other_name
@@ -31,8 +34,10 @@ type CliInfo struct {
 	gobou g relative_path
 	gobou generate relative_path
 	gobou config
-	gobou config plugin_name
-*/
+	gobou config plugin_name`)
+}
+
+// ParseCliInfo transform Args to CliInfo
 func ParseCliInfo() CliInfo {
 	cinfo := CliInfo{
 		isDefault:  false,
@@ -125,21 +130,4 @@ func (info *CliInfo) parseConfigInfo(args []string) {
 			plugin: "",
 		}
 	}
-}
-
-func (info *CliInfo) ShowHelp() {
-	fmt.Println(`how to use:
-	gobou
-	gobou i user/plugin_name
-	gobou i user/plugin_name other_name
-	gobou install user/pname
-	gobou install user/pname other_name
-	gobou u user/plugin_name
-	gobou u user/plugin_name other_name
-	gobou update user/pname
-	gobou update user/pname other_name
-	gobou g relative_path
-	gobou generate relative_path
-	gobou config
-	gobou config plugin_name`)
 }

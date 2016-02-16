@@ -8,11 +8,6 @@ import (
 	"path/filepath"
 )
 
-// AppConfig stores config about this application
-type AppConfig struct {
-	Plugins []PluginInfo
-}
-
 // AppPath stores paths about this application
 type AppPath struct {
 	ConfigDir       string
@@ -22,6 +17,11 @@ type AppPath struct {
 	PluginConfigDir string
 	ConfigFile      string
 	Config          AppConfig
+}
+
+// AppConfig stores config about this application
+type AppConfig struct {
+	Plugins []PluginInfo
 }
 
 // PrepareDirs make directories and so on
@@ -43,7 +43,6 @@ func (app *AppPath) PrepareDirs() error {
 		} else if !finfo.IsDir() {
 			return fmt.Errorf("%s is not directory", dir)
 		}
-
 	}
 
 	// app.configFile
@@ -65,39 +64,32 @@ func GetHome() string {
 
 // GetAppPath initialize application
 func GetAppPath(name string) AppPath {
-	app := AppPath{}
-
 	home := GetHome()
-	var xdgConfigDir, xdgDataDir, xdgCacheHome string
-	if os.Getenv("XDG_CONFIG_DIR") != "" {
-		xdgConfigDir = os.Getenv("XDG_CONFIG_DIR")
-	} else {
+
+	xdgConfigDir := os.Getenv("XDG_CONFIG_DIR")
+	xdgDataDir := os.Getenv("XDG_DATA_DIR")
+	xdgCacheHome := os.Getenv("XDG_CACHE_HOME")
+
+	if xdgConfigDir == "" {
 		xdgConfigDir = filepath.Join(home, ".config")
 	}
-
-	app.ConfigDir = filepath.Join(xdgConfigDir, name)
-
-	if os.Getenv("XDG_DATA_DIR") != "" {
-		xdgDataDir = os.Getenv("XDG_CONFIG_DIR")
-	} else {
+	if xdgDataDir == "" {
 		xdgDataDir = filepath.Join(home, ".local/share")
 	}
-
-	app.DataDir = filepath.Join(xdgDataDir, name)
-
-	if os.Getenv("XDG_CACHE_HOME") != "" {
-		xdgCacheHome = os.Getenv("XDG_CACHE_HOME")
-	} else {
+	if xdgCacheHome == "" {
 		xdgCacheHome = filepath.Join(home, ".cache")
 	}
 
-	app.CacheDir = filepath.Join(xdgCacheHome, name)
+	configDir := filepath.Join(xdgConfigDir, name)
+	return AppPath{
+		ConfigDir:       configDir,
+		DataDir:         filepath.Join(xdgDataDir, name),
+		CacheDir:        filepath.Join(xdgCacheHome, name),
+		ConfigFile:      filepath.Join(configDir, "config.json"),
+		PluginDir:       filepath.Join(configDir, "plugin"),
+		PluginConfigDir: filepath.Join(configDir, "plugin_config"),
+	}
 
-	app.ConfigFile = filepath.Join(app.ConfigDir, "config.json")
-	app.PluginDir = filepath.Join(app.ConfigDir, "plugin")
-	app.PluginConfigDir = filepath.Join(app.ConfigDir, "plugin_config")
-
-	return app
 }
 
 // Configure loads config file
@@ -116,6 +108,7 @@ func (app *AppPath) Configure() error {
 	return nil
 }
 
+// Add plugin to config
 func (c *AppConfig) Add(plug PluginInfo) {
 	newConfig := []PluginInfo{plug}
 	for _, p := range c.Plugins {
@@ -131,6 +124,7 @@ func (c *AppConfig) String() string {
 	return string(s)
 }
 
+// SaveConfig saves config
 func (app *AppPath) SaveConfig() {
 	ioutil.WriteFile(app.ConfigFile, []byte(app.Config.String()), os.ModePerm)
 }
