@@ -14,6 +14,7 @@ type CliInfo struct {
 	isGenerate   bool
 	isConfig     bool
 	isHelp       bool
+	isTest       bool
 	installInfo  InstallInfo
 	generateInfo GenerateInfo
 	configInfo   Configurator
@@ -31,6 +32,7 @@ func (info *CliInfo) ShowHelp() {
 	gobou u user/plugin_name other_name
 	gobou update user/pname
 	gobou update user/pname other_name
+	gobou test
 	gobou g relative_path
 	gobou generate relative_path
 	gobou config
@@ -43,6 +45,7 @@ func ParseCliInfo() CliInfo {
 		isDefault:  false,
 		isInstall:  false,
 		isUpdate:   false,
+		isTest:     false,
 		isGenerate: false,
 		isHelp:     false,
 	}
@@ -61,6 +64,8 @@ func ParseCliInfo() CliInfo {
 	case "update":
 		cinfo.isUpdate = true
 		cinfo.parseInstallInfo(os.Args[2:])
+	case "test":
+		cinfo.isTest = true
 	case "g":
 		fallthrough
 	case "generate":

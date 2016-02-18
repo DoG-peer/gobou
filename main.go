@@ -38,6 +38,9 @@ func main() {
 		app.Config.Add(plug)
 		app.SaveConfig()
 		return
+	case cli.isTest:
+		Test()
+		return
 	case cli.isGenerate:
 		log.Println("generate")
 		return
