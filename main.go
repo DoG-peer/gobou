@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 )
 
 func main() {
@@ -102,5 +103,6 @@ func main() {
 		}()
 	}
 	for {
+		time.Sleep(60 * time.Second)
 	}
 }
