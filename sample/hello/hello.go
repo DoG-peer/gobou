@@ -7,7 +7,9 @@ import (
 	"time"
 )
 
-// Edit your task
+// Task manages the activity of your plugin
+// Task's methods must be func[string, *inteface{}] error
+// you can not change this name
 type Task struct {
 	count int
 }
@@ -15,10 +17,10 @@ type Task struct {
 func (p *Task) Configure(configFile string, e *error) error {
 	return nil
 }
-func (p *Task) Main(configFile string, e *error) error {
+func (p *Task) Main(configFile string, s *string) error {
 	p.count++
-	_, *e = exec.Command("notify-send", "test"+strconv.Itoa(p.count)).Output()
-	return *e
+	*s = strconv.Itoa(p.count) + "\nhello"
+	return nil
 }
 func (p *Task) SaveData(configFile string, e *error) error {
 	return nil
@@ -30,7 +32,8 @@ func (p *Task) Interval(a string, d *time.Duration) error {
 	*d = 10 * time.Second
 	return nil
 }
-func (p *Task) End() error {
+func (p *Task) End(a string, b *interface{}) error {
+	exec.Command("notify-send", "hoge").Run()
 	return nil
 }
 func main() {

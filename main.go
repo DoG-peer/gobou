@@ -1,14 +1,12 @@
 package main
 
 import (
-	"./notify"
 	"fmt"
 	"log"
 	"time"
 )
 
 func main() {
-	notify.Notify("Hello")
 	// check arguments
 	cli := ParseCliInfo()
 	// store pathdata
@@ -69,7 +67,6 @@ func main() {
 		go func() {
 			plug := PluginManager{}
 			plug.Load(plugInfo)
-			//plug := LoadTask(plugInfo.Path, app.PluginConfigDir, app.DataDir)
 			plug.Start()
 			defer plug.Stop()
 			if err := plug.Configure(); err != nil {
@@ -77,29 +74,20 @@ func main() {
 				return
 			}
 
+			routine := []func() error{
+				plug.Main,
+				plug.Notify,
+				plug.SaveData,
+				plug.SaveConfig,
+				plug.Wait,
+			}
+		pluginLoop:
 			for {
-				// main plug
-				if err := plug.Main(); err != nil {
-					log.Fatalln(err)
-					break
-				}
-
-				// log
-				if err := plug.SaveData(); err != nil {
-					log.Fatalln(err)
-					break
-				}
-
-				// change config
-				if err := plug.SaveConfig(); err != nil {
-					log.Fatalln(err)
-					break
-				}
-
-				// wait
-				if err := plug.Wait(); err != nil {
-					log.Fatalln(err)
-					break
+				for _, f := range routine {
+					if err := f(); err != nil {
+						log.Fatalln(err)
+						break pluginLoop
+					}
 				}
 			}
 		}()

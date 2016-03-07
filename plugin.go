@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/DoG-peer/gobou/notify"
 	"github.com/dullgiulio/pingo"
 	"path/filepath"
 	"runtime"
@@ -17,6 +18,7 @@ type PluginManager struct {
 	dataDir    string
 	plugin     *pingo.Plugin
 	pluginInfo PluginInfo
+	message    string
 }
 
 // PluginInfo is saved in the main config.json
@@ -73,7 +75,12 @@ func (p *PluginManager) Stop() {
 
 // Main calls main plug
 func (p *PluginManager) Main() error {
-	return p.plugin.Call("Task.Main", "", &p.err)
+	return p.plugin.Call("Task.Main", "", &p.message)
+}
+
+// Notify notifies the information from plugin to desktop
+func (p *PluginManager) Notify() error {
+	return notify.Notify(p.message)
 }
 
 // SaveData saves data

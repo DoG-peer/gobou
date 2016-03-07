@@ -11,11 +11,15 @@ import (
 func Test() {
 	p, _ := os.Getwd()
 	name := filepath.Base(p)
+	fmt.Println(p)
+
 	err := exec.Command("go", "build").Run()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Finish build")
+
 	plug := PluginManager{
 		configFile: filepath.Join(p, "test_config.json"),
 		name:       name,
@@ -28,10 +32,13 @@ func Test() {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Finish configure")
+
 	err = plug.Main()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(p)
+	plug.Notify()
+	fmt.Println("Finish")
 }
