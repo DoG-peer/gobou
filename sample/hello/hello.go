@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dullgiulio/pingo"
+	"github.com/DoG-peer/gobou/utils"
 	"os/exec"
 	"strconv"
 	"time"
@@ -17,9 +17,9 @@ type Task struct {
 func (p *Task) Configure(configFile string, e *error) error {
 	return nil
 }
-func (p *Task) Main(configFile string, s *string) error {
+func (p *Task) Main(configFile string, s *[]gobou.Message) error {
 	p.count++
-	*s = strconv.Itoa(p.count) + "\nhello"
+	*s = []gobou.Message{gobou.Notify(strconv.Itoa(p.count) + "\nhello")}
 	return nil
 }
 func (p *Task) SaveData(configFile string, e *error) error {
@@ -37,7 +37,5 @@ func (p *Task) End(a string, b *interface{}) error {
 	return nil
 }
 func main() {
-	task := &Task{count: 0}
-	pingo.Register(task)
-	pingo.Run()
+	gobou.Register(&Task{count: 0})
 }
