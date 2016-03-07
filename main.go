@@ -1,12 +1,14 @@
 package main
 
 import (
+	"./notify"
 	"fmt"
 	"log"
 	"time"
 )
 
 func main() {
+	notify.Notify("Hello")
 	// check arguments
 	cli := ParseCliInfo()
 	// store pathdata
