@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/DoG-peer/gobou/notify"
+	"github.com/DoG-peer/gobou/utils"
 	"log"
 	"time"
 )
@@ -62,11 +64,12 @@ func main() {
 		return
 	}
 
+	mesChan := make(chan gobou.Message)
 	// run plugin
 	for _, plugInfo := range plugins {
 		go func() {
 			plug := PluginManager{}
-			plug.Load(plugInfo)
+			plug.Load(plugInfo, mesChan)
 			plug.Start()
 			defer plug.Stop()
 			if err := plug.Configure(); err != nil {
@@ -92,7 +95,15 @@ func main() {
 			}
 		}()
 	}
-	for {
-		time.Sleep(60 * time.Second)
+	for mes := range mesChan {
+		if mes.IsNone() {
+			continue
+		}
+		err := notify.Notify(mes.NotifyMessage.Text)
+		if err != nil {
+			log.Fatalln(err)
+			break
+		}
+		time.Sleep(3 * time.Second)
 	}
 }

@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/DoG-peer/gobou/notify"
+	"github.com/DoG-peer/gobou/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 // Test runs test for gobou plugin developer
@@ -20,10 +23,17 @@ func Test() {
 	}
 	fmt.Println("Finish build")
 
+	mesChan := make(chan gobou.Message)
+	go func() {
+		time.Sleep(5 * time.Second)
+		close(mesChan)
+	}()
+
 	plug := PluginManager{
-		configFile: filepath.Join(p, "test_config.json"),
-		name:       name,
-		path:       filepath.Join(p, name),
+		configFile:     filepath.Join(p, "test_config.json"),
+		name:           name,
+		path:           filepath.Join(p, name),
+		messageChannel: mesChan,
 	}
 	plug.Start()
 	defer plug.Stop()
@@ -34,11 +44,25 @@ func Test() {
 	}
 	fmt.Println("Finish configure")
 
-	err = plug.Main()
-	if err != nil {
-		fmt.Println(err)
-		return
+	go func() {
+		err = plug.Main()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		plug.Notify()
+	}()
+
+	for mes := range mesChan {
+		if mes.IsNone() {
+			continue
+		}
+		err := notify.Notify(mes.NotifyMessage.Text)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
 	}
-	plug.Notify()
+
 	fmt.Println("Finish")
 }

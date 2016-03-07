@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/DoG-peer/gobou/notify"
 	"github.com/DoG-peer/gobou/utils"
 	"github.com/dullgiulio/pingo"
 	"path/filepath"
@@ -11,15 +10,16 @@ import (
 
 // PluginManager stores the infomation of the running plugin
 type PluginManager struct {
-	interval   time.Duration
-	err        error
-	configFile string
-	name       string
-	path       string
-	dataDir    string
-	plugin     *pingo.Plugin
-	pluginInfo PluginInfo
-	messages   []gobou.Message
+	interval       time.Duration
+	err            error
+	configFile     string
+	name           string
+	path           string
+	dataDir        string
+	plugin         *pingo.Plugin
+	pluginInfo     PluginInfo
+	messages       []gobou.Message
+	messageChannel chan<- gobou.Message
 }
 
 // PluginInfo is saved in the main config.json
@@ -51,12 +51,13 @@ func (app *AppPath) MakePluginInfo(repository string, name string) PluginInfo {
 }
 
 // Load plugin by manager
-func (p *PluginManager) Load(plug PluginInfo) {
+func (p *PluginManager) Load(plug PluginInfo, mesChan chan<- gobou.Message) {
 	p.pluginInfo = plug
 	p.name = plug.Name
 	p.path = plug.Path
 	p.configFile = plug.ConfigFile
 	p.dataDir = plug.DataDirectory
+	p.messageChannel = mesChan
 }
 
 // Start starts Task
@@ -81,15 +82,11 @@ func (p *PluginManager) Main() error {
 
 // Notify notifies the information from plugin to desktop
 func (p *PluginManager) Notify() error {
-	var err error
 	for _, mes := range p.messages {
 		if mes.IsNone() {
 			continue
 		}
-		err = notify.Notify(mes.NotifyMessage.Text)
-		if err != nil {
-			return err
-		}
+		p.messageChannel <- mes
 	}
 	return nil
 }
