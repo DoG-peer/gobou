@@ -80,6 +80,9 @@ func (p *PluginManager) Main() error {
 
 // Notify notifies the information from plugin to desktop
 func (p *PluginManager) Notify() error {
+	if p.message == "" {
+		return nil
+	}
 	return notify.Notify(p.message)
 }
 
