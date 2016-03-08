@@ -25,7 +25,7 @@ func Test() {
 
 	mesChan := make(chan gobou.Message)
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		close(mesChan)
 	}()
 
@@ -39,7 +39,7 @@ func Test() {
 	defer plug.Stop()
 	err = plug.Configure()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err, "config")
 		return
 	}
 	fmt.Println("Finish configure")
@@ -47,20 +47,18 @@ func Test() {
 	go func() {
 		err = plug.Main()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(err, "plugin")
 			return
 		}
 		plug.Notify()
 	}()
 
 	for mes := range mesChan {
-		if mes.IsNone() {
-			continue
+		if !mes.NotifyMessage.IsNone() {
+			notify.Notify(mes.NotifyMessage.Text)
 		}
-		err := notify.Notify(mes.NotifyMessage.Text)
-		if err != nil {
-			fmt.Println(err)
-			break
+		if !mes.StdoutMessage.IsNone() {
+			fmt.Println(mes.StdoutMessage.Text)
 		}
 	}
 

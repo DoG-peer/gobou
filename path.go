@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DoG-peer/gobou/notify"
+	"github.com/DoG-peer/gobou/utils"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,6 +24,7 @@ type AppPath struct {
 // AppConfig stores config about this application
 type AppConfig struct {
 	Plugins []PluginInfo
+	Jtalk   notify.Jtalk
 }
 
 // PrepareDirs make directories and so on
@@ -127,4 +130,15 @@ func (c *AppConfig) String() string {
 // SaveConfig saves config
 func (app *AppPath) SaveConfig() {
 	ioutil.WriteFile(app.ConfigFile, []byte(app.Config.String()), os.ModePerm)
+}
+
+// ShowMessage shows messages from plugins
+func (app *AppPath) ShowMessage(m gobou.Message) {
+	if !m.NotifyMessage.IsNone() {
+		notify.Notify(m.NotifyMessage.Text)
+	}
+	app.Config.Jtalk.Play(m.JtalkMessage)
+	if !m.StdoutMessage.IsNone() {
+		fmt.Println(m.StdoutMessage.Text)
+	}
 }

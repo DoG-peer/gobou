@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/DoG-peer/gobou/notify"
 	"github.com/DoG-peer/gobou/utils"
 	"log"
 	"time"
@@ -99,11 +98,14 @@ func main() {
 		if mes.IsNone() {
 			continue
 		}
-		err := notify.Notify(mes.NotifyMessage.Text)
-		if err != nil {
-			log.Fatalln(err)
-			break
-		}
+		app.ShowMessage(mes)
+		/*
+			err := notify.Notify(mes.NotifyMessage.Text)
+			if err != nil {
+				log.Fatalln(err)
+				break
+			}
+		*/
 		time.Sleep(3 * time.Second)
 	}
 }

@@ -19,7 +19,11 @@ func (p *Task) Configure(configFile string, e *error) error {
 }
 func (p *Task) Main(configFile string, s *[]gobou.Message) error {
 	p.count++
-	*s = []gobou.Message{gobou.Notify(strconv.Itoa(p.count) + "\nhello")}
+	*s = []gobou.Message{
+		gobou.Notify(strconv.Itoa(p.count) + "\nhello by notify"),
+		gobou.Print(strconv.Itoa(p.count) + "\nhello by print"),
+		gobou.Say(strconv.Itoa(p.count)),
+	}
 	return nil
 }
 func (p *Task) SaveData(configFile string, e *error) error {
