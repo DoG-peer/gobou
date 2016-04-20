@@ -34,7 +34,7 @@ func (ii *InstallInfo) Install(pluginDir, cacheDir, pluginConfigDir string) {
 		return
 	}
 
-	err = initConfigFile(filepath.Join(pluginConfigDir, ii.name))
+	err = initConfigFile(filepath.Join(pluginConfigDir, ii.name) + ".json")
 	if err != nil {
 		log.Fatalln(err)
 		return
