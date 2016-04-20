@@ -66,9 +66,9 @@ func main() {
 	mesChan := make(chan gobou.Message)
 	// run plugin
 	for _, plugInfo := range plugins {
+		plug := PluginManager{}
+		plug.Load(plugInfo, mesChan)
 		go func() {
-			plug := PluginManager{}
-			plug.Load(plugInfo, mesChan)
 			plug.Start()
 			defer plug.Stop()
 			if err := plug.Configure(); err != nil {
@@ -99,13 +99,6 @@ func main() {
 			continue
 		}
 		app.ShowMessage(mes)
-		/*
-			err := notify.Notify(mes.NotifyMessage.Text)
-			if err != nil {
-				log.Fatalln(err)
-				break
-			}
-		*/
-		time.Sleep(3 * time.Second)
+		time.Sleep(30 * time.Millisecond)
 	}
 }
